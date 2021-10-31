@@ -4,7 +4,7 @@ Orbit is a space adventure where the main objective is the reach a goal point wi
 The challenge? Each planet has a harsh gravitational pull that will threaten your fragile ship with imminent destruction without careful maneuvering.
 Carefully analyzed and calculated movements along with good judgement a quick thinking will be required if you hope to navigate this treacherous galaxy.
 Speed running is advised and celebrated. Have fun!
-{Describe your purpose for writing this software.}
+
 I made this game because the idea of writing a physics engine based around gravity was exciting to me. I lovee games and being able to make one myself
 is a whole new kind of thrilling. I had a lot of fun writing this and spent more time than I want to admit watching the patterns of my ship as it orbited
 planets. The gravity logic is based on the formula for gravity, because it is the most consistent (go figure). 
