@@ -83,11 +83,10 @@ class GameView(arcade.View):
     """
     GameView handles game logic and draws Sprites to the screen
     """
+
+    # A collection of maps defined by planet and goal point locations. More levels will be added in the future.
+    # A planet is defined as a tuple with three numbers. (Scale, x-position(percentage), y-position(percentage)).
     level_maps = {
-        ''' 
-        A collection of maps defined by planet and goal point locations. More levels will be added in the future.
-        A planet is defined as a tuple with three numbers. (Scale, x-position(percentage), y-position(percentage))
-        '''
         '0' : {
             'planets' : [(1, .5, .5)],
             'goal' : (SCREEN_WIDTH - 30, SCREEN_HEIGHT - 100)
