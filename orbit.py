@@ -19,7 +19,7 @@ class Player(arcade.Sprite):
         super().__init__(filename, scale=scale)
         self.reset()
 
-        self.booster_accel = .025
+        self.booster_accel = .03
 
 
     def update(self):
@@ -218,6 +218,12 @@ class GameView(arcade.View):
             self.player.left_pressed = True
         elif key == arcade.key.RIGHT:
             self.player.right_pressed = True
+        elif key == arcade.key.W:
+            self.player.boosters = True
+        elif key == arcade.key.A:
+            self.player.left_pressed = True
+        elif key == arcade.key.D:
+            self.player.right_pressed = True
  
     def on_key_release(self, key, key_modifiers):
         """
@@ -225,11 +231,15 @@ class GameView(arcade.View):
         """
         if key == arcade.key.UP:
             self.player.boosters = False
-        #elif key == arcade.key.DOWN:
-            #self.player.brakes = False
         elif key == arcade.key.LEFT:
             self.player.left_pressed = False
         elif key == arcade.key.RIGHT:
+            self.player.right_pressed = False
+        elif key == arcade.key.W:
+            self.player.boosters = False
+        elif key == arcade.key.A:
+            self.player.left_pressed = False
+        elif key == arcade.key.D:
             self.player.right_pressed = False
 
 class TutorialView(arcade.View):
