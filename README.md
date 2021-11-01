@@ -9,7 +9,7 @@ I made this game because the idea of writing a physics engine based around gravi
 is a whole new kind of thrilling. I had a lot of fun writing this and spent more time than I want to admit watching the patterns of my ship as it orbited
 planets. The gravity logic is based on the formula for gravity, because it is the most consistent (go figure). 
 
-[Software Demo Video](http://youtube.link.goes.here)
+[Orbit Demo](https://youtu.be/qlJ2Imtu6Lo)
 
 # Development Environment
 
