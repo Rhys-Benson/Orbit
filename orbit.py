@@ -1,7 +1,11 @@
 import arcade
 import math
 import random as r
-
+import socket
+import pickle
+import select
+from arcade.sprite import Sprite
+from arcade.texture import *
 from arcade.sprite_list import SpriteList, check_for_collision
 
 SCREEN_WIDTH = 1400
@@ -15,12 +19,14 @@ class Player(arcade.Sprite):
     Player will be reset to the starting position if it strays too far from the edge of the screen.
     '''
 
-    def __init__(self, filename, scale=1):
+    def __init__(self, filename, start_x, start_y, scale=.25):
         super().__init__(filename, scale=scale)
+        self.start_x = start_x
+        self.start_y = start_y
+
         self.reset()
 
         self.booster_accel = .03
-
 
     def update(self):
         if self.boosters:
@@ -35,18 +41,45 @@ class Player(arcade.Sprite):
         self.center_y += self.y_velocity
 
         if self.center_x <= -200 or self.center_x >= SCREEN_WIDTH + 200 or self.center_y <= -200 or self.center_y >= SCREEN_HEIGHT + 200:
-            self.reset()
-            
+            self.reset()   
 
     def reset(self):
-        self.center_x = 25
-        self.center_y = 25
+        self.center_x = self.start_x
+        self.center_y = self.start_y
         self.x_velocity = 0
         self.y_velocity = 0
         self.angle = 0
         self.boosters = False
         self.left_pressed = False
         self.right_pressed = False
+
+    def on_key_press(self, key):
+        if key == arcade.key.UP:
+            self.boosters = True
+        elif key == arcade.key.LEFT:
+            self.left_pressed = True
+        elif key == arcade.key.RIGHT:
+            self.right_pressed = True
+        elif key == arcade.key.W:
+            self.boosters = True
+        elif key == arcade.key.A:
+            self.left_pressed = True
+        elif key == arcade.key.D:
+            self.right_pressed = True
+
+    def on_key_release(self, key):
+        if key == arcade.key.UP:
+            self.boosters = False
+        elif key == arcade.key.LEFT:
+            self.left_pressed = False
+        elif key == arcade.key.RIGHT:
+            self.right_pressed = False
+        elif key == arcade.key.W:
+            self.boosters = False
+        elif key == arcade.key.A:
+            self.left_pressed = False
+        elif key == arcade.key.D:
+            self.right_pressed = False
         
         
 class Planet(arcade.Sprite):
@@ -62,8 +95,9 @@ class Planet(arcade.Sprite):
         self.gravity = 300 * scale
         self.range = 300 * math.sqrt(scale)
 
-    def draw_range(self):
+    def draw(self):
         arcade.draw_circle_filled(self.center_x, self.center_y, self.range, [255,0,0,25])
+        super().draw()
 
 
     def apply_gravity(self, target):
@@ -79,9 +113,9 @@ class Planet(arcade.Sprite):
             target.y_velocity += math.sin(angle) * gravity_factor
 
 
-class GameView(arcade.View):
+class LevelView(arcade.View):
     """
-    GameView handles game logic and draws Sprites to the screen
+    LevelView handles game logic and draws Sprites to the screen
     """
 
     # A collection of maps defined by planet and goal point locations. More levels will be added in the future.
@@ -89,7 +123,8 @@ class GameView(arcade.View):
     level_maps = {
         '0' : {
             'planets' : [(1, .5, .5)],
-            'goal' : (SCREEN_WIDTH - 30, SCREEN_HEIGHT - 100)
+            'goal' : (SCREEN_WIDTH - 30, SCREEN_HEIGHT - 100),
+            'player_start' : (25, 25)
         },
         '1' : {
             'planets' : [
@@ -98,7 +133,9 @@ class GameView(arcade.View):
                 (.75, .2, .66),
                 (.5, .18, .2),
                 (.33, .75, .58)],
-            'goal' : (SCREEN_WIDTH - 100, SCREEN_HEIGHT - 100)},
+            'goal' : (SCREEN_WIDTH - 100, SCREEN_HEIGHT - 100),
+            'player_start' : (25, 25)
+        },
         '2' : {
             'planets' : [
                 (.5, .5, .5),
@@ -110,7 +147,8 @@ class GameView(arcade.View):
                 (.5, .33, .5),
                 (.5, .66, .5),
                 (.5, .83, .5)],
-            'goal' : (SCREEN_WIDTH - 50, SCREEN_HEIGHT - 50)
+            'goal' : (SCREEN_WIDTH - 50, SCREEN_HEIGHT - 50),
+            'player_start' : (25, 25)
         },
         '3' : {
             'planets' : [
@@ -120,7 +158,8 @@ class GameView(arcade.View):
                 (.5, .4, .25),
                 (.5, .6, .75)
             ],
-            'goal' : (SCREEN_WIDTH - 50, SCREEN_HEIGHT - 50)
+            'goal' : (SCREEN_WIDTH - 50, SCREEN_HEIGHT - 50),
+            'player_start' : (25, 25)
         },
         '4' : {
             'planets' : [
@@ -140,7 +179,9 @@ class GameView(arcade.View):
                 (.5, .8, .33),
                 (.5, .8, .66),
                 (.5, .8, .83)],
-            'goal' : (SCREEN_WIDTH - 30, SCREEN_HEIGHT - 100)},            
+            'goal' : (SCREEN_WIDTH - 30, SCREEN_HEIGHT - 100),
+            'player_start' : (25, 25)
+        },            
     }
 
     def __init__(self):
@@ -157,8 +198,8 @@ class GameView(arcade.View):
         '''
         Sets up the game. This function initializes a map based on self.level, and is called
         each time the player passes to the next level.'''
-
-        self.player = Player(":resources:images/space_shooter/playerShip1_green.png", scale=.25)
+        player_x, player_y = self.level_maps[str(self.level)]['player_start']
+        self.player = Player(":resources:images/space_shooter/playerShip1_green.png", player_x, player_y)
         self.player_list = arcade.SpriteList()
         self.player_list.append(self.player)
 
@@ -182,8 +223,8 @@ class GameView(arcade.View):
 
         self.player_list.draw()
         for planet in self.planet_list:
-            planet.draw_range()
-        self.planet_list.draw()
+            planet.draw()
+        #self.planet_list.draw()
         self.goal.draw()
 
 
@@ -195,6 +236,7 @@ class GameView(arcade.View):
         # Apply gravity to the player for every planet in which the player is in range
         for planet in self.planet_list:
             planet.apply_gravity(self.player)
+
         self.player_list.update()
 
         # Restart the level if the player crashes into a planet
@@ -211,55 +253,168 @@ class GameView(arcade.View):
         """
         Called whenever a key on the keyboard is pressed.
         """
-
-        if key == arcade.key.UP:
-            self.player.boosters = True
-        elif key == arcade.key.LEFT:
-            self.player.left_pressed = True
-        elif key == arcade.key.RIGHT:
-            self.player.right_pressed = True
-        elif key == arcade.key.W:
-            self.player.boosters = True
-        elif key == arcade.key.A:
-            self.player.left_pressed = True
-        elif key == arcade.key.D:
-            self.player.right_pressed = True
+        self.player.on_key_press(key)
  
     def on_key_release(self, key, key_modifiers):
         """
         Called whenever the user lets off a previously pressed key.
         """
-        if key == arcade.key.UP:
-            self.player.boosters = False
-        elif key == arcade.key.LEFT:
-            self.player.left_pressed = False
-        elif key == arcade.key.RIGHT:
-            self.player.right_pressed = False
-        elif key == arcade.key.W:
-            self.player.boosters = False
-        elif key == arcade.key.A:
-            self.player.left_pressed = False
-        elif key == arcade.key.D:
-            self.player.right_pressed = False
+        self.player.on_key_release(key)
 
-class TutorialView(arcade.View):
+class PartyView(arcade.View):
     '''
-    A currently experimental view to give the player a tutorial before starting the game.
+    View used to play multiplayer
+    maps contains dictionaries representing different maps, listing both player starting locations and planets
     '''
-    def __init__(self):
+
+    maps = {
+        '1' : {
+            'player1_start' : (50, SCREEN_HEIGHT / 2),
+            'player2_start' : (SCREEN_WIDTH - 50, SCREEN_HEIGHT / 2),
+            'planets' : [(1, .5, .5)]
+        }
+    }
+
+    def __init__(self, is_host, host_name):
         super().__init__()
+
         arcade.set_background_color(arcade.color.BLACK)
 
-    def on_setup(self):
-        ship = arcade.Sprite(":resources:images/space_shooter/playerShip1_green.png", scale=.25, center_x=25, center_y=25)
+        self.planet_list = None
+        self.player_list = None
+        self.send_list = None
+        self.planet_image = ":resources:images/space_shooter/meteorGrey_big4.png"
+        self.map = 1
+
+        # Connect the host and the client program
+        self.is_host = is_host
+        self.sock = socket.socket()              
+        if self.is_host:
+            self.sock.bind((host_name, 12345))
+            self.sock.listen(5)
+            self.sock, addr = self.sock.accept()
+        else:
+            self.sock.connect((host_name, 12345))
+
+    def setup(self):
+        '''
+        Creates sprites for the whole map, including both players and planets
+        self.player respresents the character being controlled by the current program
+        self.opponent represents the character controlled by the other program
+        '''
+
+        # Determine player and opponent variables based on who is the host (player 1)
+        if self.is_host:
+            player_x, player_y = self.maps[str(self.map)]['player1_start']
+            opponent_x, opponent_y = self.maps[str(self.map)]['player2_start']
+            player_img = ":resources:images/space_shooter/playerShip1_green.png"
+            opponent_img = ":resources:images/space_shooter/playerShip1_orange.png"
+        else:
+            player_x, player_y = self.maps[str(self.map)]['player2_start']
+            opponent_x, opponent_y = self.maps[str(self.map)]['player1_start']
+            player_img = ":resources:images/space_shooter/playerShip1_blue.png"
+            opponent_img = ":resources:images/space_shooter/playerShip2_orange.png"
+    
+        self.player = Player(player_img, player_x, player_y)
+        self.opponent = Player(opponent_img, opponent_x, opponent_y)
+
+        self.player_list = arcade.SpriteList()
+        self.player_list.append(self.player)
+        self.player_list.append(self.opponent)
+
+        # Create planets
+        planets = [Planet(self.planet_image, p[0], SCREEN_WIDTH * p[1], SCREEN_HEIGHT * p[2]) for p in self.maps[str(self.map)]['planets']]
+        self.planet_list = SpriteList()
+        for planet in planets:
+            self.planet_list.append(planet)
+
+        # This allows our communication between processes to be smoother
+        self.sock.setblocking(0)
+
+
+    def on_draw(self):
+        ''' Draw both players and planets to the screen'''
+        arcade.start_render()
+
+        self.player_list.draw()
+        for planet in self.planet_list:
+            planet.draw()
+
+    def on_update(self, delta_time: float):
+        '''
+        Handles game logic for the player
+        Send position of player to the other program
+        Receive position of opponent from the other program
+        '''
+        for planet in self.planet_list:
+            planet.apply_gravity(self.player)
+
+        self.player_list.update()
+
+        if len(arcade.check_for_collision_with_list(self.player, self.planet_list)) > 0:
+            self.player.reset()
+
+        send_data = {
+            'center_x' : self.player.center_x,
+            'center_y' : self.player.center_y,
+            'angle' : self.player.angle
+        }
+
+        # Send player's position
+        self.sock.sendall(pickle.dumps(send_data))
+
+        # Receive opponent's position
+        data = b''
+        while True:
+            try:
+                packet = self.sock.recv(4096)
+            except BlockingIOError:
+                # break if there is no more to receive
+                break
+            data += packet
+        if data:
+            opp_data = pickle.loads(data)
+            self.opponent.center_x = opp_data['center_x']
+            self.opponent.center_y = opp_data['center_y']
+            self.opponent.angle = opp_data['angle']
+
+        
+    def on_key_press(self, key, key_modifiers):
+        """
+        Called whenever a key on the keyboard is pressed.
+        """
+        self.player.on_key_press(key)
+ 
+    def on_key_release(self, key, key_modifiers):
+        """
+        Called whenever the user lets off a previously pressed key.
+        """
+        self.player.on_key_release(key)
+        
 
 
 def main():
     '''
     Open an arcade window and start the game view.
     '''
+    game_mode = input('Select game mode [S/M]: ')
+    if game_mode == 'M':
+        host_choice = input('Host? [Y/N]')
+        if host_choice == 'N':
+            host_name = input('Enter name of you host: ')
+    else:
+        print(f'Host name: {socket.gethostname()}')
+
     window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
-    game = GameView()
+
+    if game_mode == 'S':
+        game = LevelView()
+    else: 
+        if host_choice == 'Y':
+            game = PartyView(True, socket.gethostname())
+        else:
+            game = PartyView(False, host_name)
+
     window.show_view(game)
     game.setup()
     arcade.run()
