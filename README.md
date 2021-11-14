@@ -33,11 +33,10 @@ peer receives these variables and uses them to draw the opposing player in their
 
 I made this game solely using visual studio code. It's a great IDE and I would definitely recommend it to anyone.
 
-Orbit is written in python using the arcade and math libraries.
+Orbit is written in python. The main libraries used are arcade and socket. Other required libraries include math and pickle.
 
 # Useful Websites
 
-{Make a list of websites that you found helpful in this project}
 * [Arcade tutorial and reference](https://api.arcade.academy/en/latest/)
 * [Math library reference](https://docs.python.org/3/library/math.html)
 
