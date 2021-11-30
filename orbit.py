@@ -18,7 +18,6 @@ class Player(arcade.Sprite):
     Player has the ability the rotate left and right and accelerate(boost) straight forward in the direction it is facing.
     Player will be reset to the starting position if it strays too far from the edge of the screen.
     '''
-
     def __init__(self, filename, start_x, start_y, scale=.25):
         super().__init__(filename, scale=scale)
         self.start_x = start_x
@@ -54,31 +53,19 @@ class Player(arcade.Sprite):
         self.right_pressed = False
 
     def on_key_press(self, key):
-        if key == arcade.key.UP:
+        if key == arcade.key.UP or key == arcade.key.W:
             self.boosters = True
-        elif key == arcade.key.LEFT:
+        elif key == arcade.key.LEFT or key == arcade.key.A:
             self.left_pressed = True
-        elif key == arcade.key.RIGHT:
-            self.right_pressed = True
-        elif key == arcade.key.W:
-            self.boosters = True
-        elif key == arcade.key.A:
-            self.left_pressed = True
-        elif key == arcade.key.D:
+        elif key == arcade.key.RIGHT or key == arcade.key.D:
             self.right_pressed = True
 
     def on_key_release(self, key):
-        if key == arcade.key.UP:
+        if key == arcade.key.UP or key == arcade.key.W:
             self.boosters = False
-        elif key == arcade.key.LEFT:
+        elif key == arcade.key.LEFT or key == arcade.key.A:
             self.left_pressed = False
-        elif key == arcade.key.RIGHT:
-            self.right_pressed = False
-        elif key == arcade.key.W:
-            self.boosters = False
-        elif key == arcade.key.A:
-            self.left_pressed = False
-        elif key == arcade.key.D:
+        elif key == arcade.key.RIGHT or key == arcade.key.D:
             self.right_pressed = False
         
         
@@ -402,8 +389,8 @@ def main():
         host_choice = input('Host? [Y/N]')
         if host_choice == 'N':
             host_name = input('Enter name of you host: ')
-    else:
-        print(f'Host name: {socket.gethostname()}')
+        else:
+            print(f'Host name: {socket.gethostname()}')
 
     window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
 
